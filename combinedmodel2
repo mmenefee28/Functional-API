@@ -1,0 +1,66 @@
+backend.clear_session()
+
+#Visible layer
+vislayer = Input(shape=(32,32,3))
+
+#conv1
+conv11 = SeparableConv2D(64, 3, padding='same', activation='relu')(vislayer)
+conv12 = SeparableConv2D(128, 3,strides=2, padding='same', activation='relu')(conv11)
+conv13 = MaxPooling2D((2,2), padding='same')(conv12)
+
+#Conv2
+conv21 = SeparableConv2D(64, 3, padding='same', activation='relu')(vislayer)
+conv22 = SeparableConv2D(128, 3, padding='same', activation='relu', strides=2)(conv21)
+conv23 = MaxPooling2D((2,2), padding='same')(conv22)
+
+#Conv3
+conv31 = SeparableConv2D(64, 3, activation='relu', padding='same')(vislayer)
+conv32 = SeparableConv2D(128, 3,activation='relu', padding='same', strides=2)(conv31)
+conv33 = MaxPooling2D((2,2), padding='same')(conv32)
+
+#Conv4
+conv42 = SeparableConv2D(64, 3, padding='same', activation='relu')(vislayer)
+conv43 = SeparableConv2D(128, 3, padding='same', activation='relu', strides=2)(conv42)
+conv44 = MaxPooling2D((2,2), padding='same')(conv43)
+
+#concat
+merged = Concatenate(axis=-1)([conv13, conv23, conv33, conv44])
+lvl2norm = BatchNormalization()(merged)
+
+#conv5
+conv51 = SeparableConv2D(64, 3, padding='same', activation='relu')(lvl2norm)
+conv52 = SeparableConv2D(128, 3,strides=2, padding='same', activation='relu')(conv51)
+conv53 = MaxPooling2D((2,2), padding='same')(conv52)
+
+#Conv6
+conv61 = SeparableConv2D(64, 3, padding='same', activation='relu')(lvl2norm)
+conv62 = SeparableConv2D(128, 3, padding='same', activation='relu', strides=2)(conv61)
+conv63 = MaxPooling2D((2,2), padding='same')(conv62)
+
+#Conv7
+conv71 = SeparableConv2D(64, 3, activation='relu', padding='same')(lvl2norm)
+conv72 = SeparableConv2D(128, 3,activation='relu', padding='same', strides=2)(conv71)
+conv73 = MaxPooling2D((2,2), padding='same')(conv72)
+
+#Conv8
+conv82 = SeparableConv2D(64, 3, padding='same', activation='relu')(lvl2norm)
+conv83 = SeparableConv2D(128, 3, padding='same', activation='relu', strides=2)(conv82)
+conv84 = MaxPooling2D((2,2), padding='same')(conv83)
+
+#concat
+merged2 = Concatenate(axis=-1)([conv53, conv63, conv73, conv84])
+
+bnorm = BatchNormalization()(merged2)
+conv5 = Conv2D(128, 3, padding='same', activation='relu')(bnorm)
+conv6 = Conv2D(128, 3, padding='same', activation='relu')(conv5)
+bnorm2 = BatchNormalization()(conv6)
+flat = Flatten()(bnorm2)
+hidden = Dense(128, activation='relu')(flat)
+drop = Dropout(0.5)(hidden)
+output = Dense(10, activation='softmax')(drop)
+
+#Model
+lvl3model = Model(inputs=vislayer, outputs=output)
+
+#plot
+plot_model(lvl3model)
