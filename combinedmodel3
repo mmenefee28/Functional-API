@@ -1,0 +1,65 @@
+# Build the model and print (plot) the model.
+backend.clear_session()
+
+#Visible layer
+vislayer = Input(shape=(32,32,3))
+
+#First nets and Normalization
+conv01 = Conv2D(128, 3,strides=2, padding='same', activation='relu')(vislayer)
+conv02 = Conv2D(128, 3,strides=2, padding='same', activation='relu')(conv01)
+
+visnorm = BatchNormalization()(conv02)
+
+#conv1
+conv11 = Conv2D(128, 1,strides=2, padding='same', activation='relu')(visnorm)
+
+#Conv2
+conv21 = Conv2D(128, 1, padding='same', activation='relu')(visnorm)
+conv22 = Conv2D(128, 3, padding='same', activation='relu', strides=2)(conv21)
+
+#AvgPool
+avpool31 = AveragePooling2D(3, strides=2, padding='same')(visnorm)
+avpool32 = Conv2D(128, 3,activation='relu', padding='same')(avpool31)
+
+#Conv3
+conv41 = Conv2D(128, 1, padding='same', activation='relu')(visnorm)
+conv42 = Conv2D(128, 3, padding='same', activation='relu')(conv41)
+conv43 = Conv2D(128, 3, padding='same', activation='relu', strides=2)(conv42)
+
+#concat
+merged = Concatenate(axis=-1)([conv11, conv22, avpool32, conv43])
+lvl2norm = BatchNormalization()(merged)
+
+#conv5
+conv51 = Conv2D(128, 1,strides=2, padding='same', activation='relu')(lvl2norm)
+
+#Conv6
+conv61 = Conv2D(128, 1, padding='same', activation='relu')(lvl2norm)
+conv62 = Conv2D(128, 3, padding='same', activation='relu', strides=2)(conv61)
+
+#AvgPool
+avpool71 = AveragePooling2D(3, strides=2, padding='same')(lvl2norm)
+avpool72 = Conv2D(128, 3,activation='relu', padding='same')(avpool71)
+
+#Conv8
+conv81 = Conv2D(128, 1, padding='same', activation='relu')(lvl2norm)
+conv82 = Conv2D(128, 3, padding='same', activation='relu')(conv81)
+conv83 = Conv2D(128, 3, padding='same', activation='relu', strides=2)(conv82)
+
+#concat
+merged2 = Concatenate(axis=-1)([conv51, conv62, avpool72, conv83])
+
+bnorm = BatchNormalization()(merged2)
+conv5 = Conv2D(128, 3, padding='same', activation='relu')(bnorm)
+conv6 = Conv2D(128, 3, padding='same', activation='relu')(conv5)
+bnorm2 = BatchNormalization()(conv6)
+flat = Flatten()(bnorm2)
+hidden = Dense(128, activation='relu')(flat)
+drop = Dropout(0.5)(hidden)
+output = Dense(10, activation='softmax')(drop)
+
+#Model
+lvl4model = Model(inputs=vislayer, outputs=output)
+
+#plot
+plot_model(lvl4model)
