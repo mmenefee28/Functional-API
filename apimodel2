@@ -1,0 +1,44 @@
+# Optimize your model(s).
+# Build the model(s) and print (plot) the model.
+backend.clear_session()
+
+#Visible layer
+vislayer = Input(shape=(32,32,3))
+
+#conv1
+conv11 = SeparableConv2D(64, 3, padding='same', activation='relu')(vislayer)
+conv12 = SeparableConv2D(128, 3,strides=2, padding='same', activation='relu')(conv11)
+conv13 = MaxPooling2D((2,2), padding='same')(conv12)
+
+#Conv2
+conv21 = SeparableConv2D(64, 3, padding='same', activation='relu')(vislayer)
+conv22 = SeparableConv2D(128, 3, padding='same', activation='relu', strides=2)(conv21)
+conv23 = MaxPooling2D((2,2), padding='same')(conv22)
+
+#Conv3
+conv31 = SeparableConv2D(64, 3, activation='relu', padding='same')(vislayer)
+conv32 = SeparableConv2D(128, 3,activation='relu', padding='same', strides=2)(conv31)
+conv33 = MaxPooling2D((2,2), padding='same')(conv32)
+
+#Conv4
+conv42 = SeparableConv2D(64, 3, padding='same', activation='relu')(vislayer)
+conv43 = SeparableConv2D(128, 3, padding='same', activation='relu', strides=2)(conv42)
+conv44 = MaxPooling2D((2,2), padding='same')(conv43)
+
+#concat
+merged = Concatenate(axis=-1)([conv13, conv23, conv33, conv44])
+
+#bnorm = BatchNormalization()(merged)
+conv5 = Conv2D(64, 1, padding='same', activation='relu')(merged)
+conv6 = Conv2D(128, 3, padding='same', activation='relu')(conv5)
+bnorm2 = BatchNormalization()(conv6)
+flat = Flatten()(bnorm2)
+hidden = Dense(64, activation='relu')(flat)
+drop = Dropout(0.5)(hidden)
+output = Dense(10, activation='softmax')(drop)
+
+#Model
+mymodel = Model(inputs=vislayer, outputs=output)
+
+#plot
+plot_model(mymodel)
